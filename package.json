@@ -1,0 +1,29 @@
+{
+  "name": "velxio-chips",
+  "version": "0.1.0",
+  "description": "Open-source custom chip collection for Velxio — clean-room retro CPUs (Intel 4004/4040/8080/8086, Zilog Z80) and bus chips, plus bundled mini-computer demos.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "compile:all": "bash scripts/compile-all.sh",
+    "compile:chip": "bash scripts/compile-chip.sh"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/velxio/velxio-chips"
+  },
+  "keywords": [
+    "velxio",
+    "wasm",
+    "custom-chip",
+    "8080",
+    "z80",
+    "intel",
+    "retro",
+    "emulator"
+  ]
+}

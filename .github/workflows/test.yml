@@ -1,0 +1,31 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install wasi-sdk
+        run: |
+          curl -sL https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-22/wasi-sdk-22.0-linux.tar.gz | tar xz
+          echo "WASI_SDK=$PWD/wasi-sdk-22.0" >> $GITHUB_ENV
+
+      - name: Install npm deps
+        run: npm install
+
+      - name: Compile every chip
+        run: npm run compile:all
+
+      - name: Run vitest
+        run: npm test
