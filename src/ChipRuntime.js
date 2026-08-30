@@ -239,6 +239,11 @@ export class ChipInstance {
       // Attributes
       vx_attr_register: (namePtr, defaultVal) => this._attr_register(namePtr, defaultVal),
       vx_attr_read:     (handle) => this._attr_read(handle),
+      vx_attr_register_string: (namePtr, defaultPtr) =>
+        this._attr_register_string(namePtr, defaultPtr),
+      vx_attr_string_len:  (handle) => this._attr_string_value(handle).length,
+      vx_attr_string_read: (handle, bufPtr, cap) =>
+        this._attr_string_read(handle, bufPtr, cap),
 
       // I2C
       vx_i2c_attach: (cfgPtr) => this._i2c_attach(cfgPtr),
@@ -257,6 +262,14 @@ export class ChipInstance {
       vx_timer_create:  (cbIdx, userData) => this._timer_create(cbIdx, userData),
       vx_timer_start:   (handle, period, repeat) => this._timer_start(handle, period, repeat),
       vx_timer_stop:    (handle) => this._timer_stop(handle),
+
+      // Framebuffer + external ROM — headless-harness stubs so chips using
+      // them still instantiate (the app runtimes implement them for real).
+      vx_framebuffer_init: (_w, _h) => -1,
+      vx_buffer_write: () => {},
+      vx_buffer_read: () => {},
+      vx_rom_size: () => 0,
+      vx_rom_read: () => {},
 
       // Logging
       vx_log: (msgPtr) => {
@@ -352,6 +365,31 @@ export class ChipInstance {
   }
 
   // ── Attributes ───────────────────────────────────────────────────────────
+
+  _attr_register_string(namePtr, defaultPtr) {
+    const name = readCString(this.memory, namePtr);
+    const dflt = readCString(this.memory, defaultPtr);
+    const handle = this.attrHandles.length;
+    this.attrHandles.push({ name, default: 0, stringDefault: dflt });
+    return handle;
+  }
+
+  _attr_string_value(handle) {
+    const a = this.attrHandles[handle];
+    if (!a || a.stringDefault === undefined) return '';
+    const v = this.attrs.get(a.name);
+    return typeof v === 'string' ? v : a.stringDefault;
+  }
+
+  _attr_string_read(handle, bufPtr, cap) {
+    if (cap <= 0) return 0;
+    const bytes = new TextEncoder().encode(this._attr_string_value(handle));
+    const n = Math.min(bytes.length, cap - 1);
+    const dst = new Uint8Array(this.memory.buffer, bufPtr, cap);
+    dst.set(bytes.subarray(0, n));
+    dst[n] = 0;
+    return n;
+  }
 
   _attr_register(namePtr, defaultVal) {
     const name = readCString(this.memory, namePtr);

@@ -85,6 +85,16 @@ typedef int32_t vx_attr;
 extern vx_attr vx_attr_register(const char* name, double default_val);
 extern double  vx_attr_read(vx_attr a);
 
+/* String attributes — for text parameters (a device id, an SSID, a preset
+ * name). The value comes from chip.json / the diagram editor; the chip only
+ * reads it. Register from chip_setup(). */
+extern vx_attr  vx_attr_register_string(const char* name, const char* default_val);
+/** Byte length of the current value (excluding the NUL terminator). */
+extern uint32_t vx_attr_string_len(vx_attr a);
+/** Copy up to `cap` bytes (including a NUL when it fits) into `buf`.
+ *  Returns the number of bytes written, excluding the NUL. */
+extern uint32_t vx_attr_string_read(vx_attr a, char* buf, uint32_t cap);
+
 /* ─── I2C slave ─────────────────────────────────────────────────────────── */
 
 typedef int32_t vx_i2c;
@@ -190,10 +200,35 @@ extern vx_buffer vx_framebuffer_init(uint32_t* out_width, uint32_t* out_height);
 /** Write `data_len` bytes into the framebuffer at the given byte offset. */
 extern void vx_buffer_write(vx_buffer buf, uint32_t offset, const void* data, uint32_t data_len);
 
+/** Read `data_len` bytes from the framebuffer at the given byte offset. */
+extern void vx_buffer_read(vx_buffer buf, uint32_t offset, void* data, uint32_t data_len);
+
 /* ─── Logging ───────────────────────────────────────────────────────────── */
 
 /** Emit a message to the host's chip log. printf() also works via WASI. */
 extern void vx_log(const char* msg);
+
+/* ─── External ROM blob ─────────────────────────────────────────────────── */
+
+/**
+ * Read a chip's external ROM blob. The blob is injected by the host before
+ * `chip_setup()` runs, sourced from the `romBytes` property of the chip's
+ * component (base64-encoded bytes in the diagram editor, or compiled from
+ * a chip-program file like .s / .hex / .bin).
+ *
+ * Typical use — a CPU emulator chip loads its emulated program once at boot:
+ *
+ *   uint32_t rom_len = vx_rom_size();
+ *   if (rom_len) vx_rom_read(0, my_rom_buf, rom_len);
+ *
+ * If no ROM is provided, vx_rom_size() returns 0 and vx_rom_read() is a no-op
+ * — chips can fall back to a built-in default in that case.
+ */
+extern uint32_t vx_rom_size(void);
+
+/** Copy `len` bytes from offset `offset` of the external ROM into `dst`.
+ *  Reads past the end of the ROM are silently truncated. */
+extern void vx_rom_read(uint32_t offset, uint8_t* dst, uint32_t len);
 
 /* ─── Lifecycle (chip exports) ──────────────────────────────────────────── */
 
