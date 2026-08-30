@@ -252,7 +252,7 @@ static inline wokwi_timer_t timer_init(const timer_config_t *config) {
   return vx_timer_create(config->callback, config->user_data);
 }
 
-/* Wokwi's timer_start takes MICROseconds; the native API is nanoseconds. */
+/* The alternate timer_start takes MICROseconds; the native API is nanoseconds. */
 static inline void timer_start(wokwi_timer_t timer, uint32_t micros, bool repeat) {
   vx_timer_start(timer, (uint64_t)micros * 1000ULL, repeat);
 }
