@@ -1,14 +1,14 @@
 /*
- * Compatibility fixture: a chip written 100% against the DOCUMENTED Wokwi
- * custom chips C API — chip_init entry point, pin_init, pin_watch with a
- * config struct, attr_init/attr_read, timer_init with a config struct and
- * timer_start in MICROseconds. Compiling and running it unchanged is the
- * test: every symbol resolves through wokwi-compat.h onto the native vx_*
- * API, and the timer cadence proves the us->ns conversion.
+ * Compatibility fixture: a chip written entirely against the alternate
+ * header (chip_init entry point, pin_init, config-struct pin_watch,
+ * attr_init/attr_read, timer_init with a config struct and timer_start in
+ * MICROseconds). Compiling and running it unchanged is the test: every
+ * symbol resolves through wokwi-compat.h onto the native vx_* API, and the
+ * timer cadence proves the us->ns conversion.
  *
  * Behaviour:
  *   OUT  = !IN                      (via pin_watch, combinational)
- *   TICK toggles every 500 ms       (via timer_start(…, 500000, true))
+ *   TICK toggles every 500 ms       (via timer_start(..., 500000, true))
  *   The first attr_read("gain") value gates the watch: gain==0 disables it.
  */
 #include "wokwi-api.h"

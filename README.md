@@ -22,8 +22,7 @@ Frank Cringle's ZEXDOC (1994).
 
 ```
 .
-├── sdk/                       SDK headers: velxio-chip.h (native API),
-│                              wokwi-compat.h + wokwi-api.h (Wokwi source compat)
+├── sdk/                       SDK headers (velxio-chip.h is the API)
 ├── src/
 │   ├── cpu/                   Retro CPU chips
 │   │   ├── 4004.c             Intel 4004 (1971)
@@ -53,7 +52,7 @@ Frank Cringle's ZEXDOC (1994).
 │   └── counter-rom.s          8080 source for the bundled counter ROM
 ├── src/                       Test harness (BoardHarness, helpers, ISA tables)
 ├── test_4004/ … test_z80/     Per-CPU vitest suites (129 tests)
-├── test_compat/               Wokwi API compatibility suite
+├── test_compat/               Alternate-header compile/dispatch tests
 ├── test_buses/                Bus chip tests
 ├── autosearch/                Datasheet excerpts + reference manuals
 └── vitest.config.js
@@ -117,18 +116,6 @@ MMIO peripherals.
 3. `npm run compile:chip src/<dir>/<chip>.c fixtures/<chip>.wasm`
 4. Drop a `test_<chip>/<chip>.test.js` that uses `BoardHarness` to wire
    the chip up and assert on its observable behaviour.
-
-## Wokwi compatibility
-
-A chip written for the Wokwi custom chips C API compiles here **unchanged**:
-`#include "wokwi-api.h"` resolves to `sdk/wokwi-compat.h`, a clean-room
-adapter (written from Wokwi's public documentation only) that maps every
-documented symbol onto the native `vx_*` API — `chip_init` → `chip_setup`,
-struct-config `pin_watch`/`i2c_init`/`uart_init`/`spi_init`/`timer_init`
-translated field by field, `timer_start` microseconds → native nanoseconds.
-`test_compat/` proves it end to end with a chip written 100% against the
-Wokwi API. Not covered: the experimental `_mcu_*` introspection API, and
-precompiled Wokwi `.wasm` binaries (recompile from source — same C, our ABI).
 
 ## License
 

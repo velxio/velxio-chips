@@ -1,20 +1,20 @@
 /**
- * Wokwi API compatibility — a chip written 100% against the documented
- * Wokwi custom chips C API (chip_init, pin_init, struct-config pin_watch /
+ * Alternate-header compatibility — a chip written entirely against the
+ * legacy-style header (chip_init, pin_init, struct-config pin_watch /
  * timer_init, attr_init, timer_start in MICROseconds) compiles through
  * sdk/wokwi-api.h -> wokwi-compat.h and runs on the native runtime
- * unchanged. See test_compat/wokwi-style-chip.c.
+ * unchanged. See test_compat/alt-header-chip.c.
  */
 import { describe, it, expect } from 'vitest';
 import { BoardHarness } from '../src/BoardHarness.js';
 import { chipWasmExists } from '../src/helpers.js';
 
-const CHIP = 'wokwi-style-chip';
+const CHIP = 'alt-header-chip';
 const skip = !chipWasmExists(CHIP);
 
 const PINS = { IN: 'in', OUT: 'out', TICK: 'tick' };
 
-describe.skipIf(skip)('wokwi-compat.h', () => {
+describe.skipIf(skip)('alternate header (wokwi-compat.h)', () => {
   it('chip_init runs (via the chip_setup rename) and OUTPUT_HIGH lands', async () => {
     const b = new BoardHarness();
     await b.addChip(CHIP, PINS);
