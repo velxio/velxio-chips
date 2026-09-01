@@ -19,7 +19,7 @@ compiled=0
 
 shopt -s nullglob
 # Compile every .c under src/{cpu,bus,bundled}/ into fixtures/<name>.wasm.
-for c_source in "$ROOT"/src/cpu/*.c "$ROOT"/src/bus/*.c "$ROOT"/src/bundled/*.c; do
+for c_source in "$ROOT"/src/cpu/*.c "$ROOT"/src/bus/*.c "$ROOT"/src/bundled/*.c "$ROOT"/src/sensors/*.c; do
   found=$((found+1))
   base="$(basename "$c_source" .c)"
   out="$ROOT/fixtures/$base.wasm"

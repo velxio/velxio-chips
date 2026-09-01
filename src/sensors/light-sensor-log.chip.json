@@ -1,0 +1,14 @@
+{
+  "schema": "velxio-chip/v1",
+  "name": "Light Sensor",
+  "author": "Velxio",
+  "license": "MIT",
+  "description": "Illuminance sensor with a logarithmic lux slider. OUT carries 1 V per decade: 1 lx = 0 V, 100 000 lx = 5 V.",
+  "pins": ["VCC", "GND", "OUT"],
+  "attributes": [
+    { "name": "lux", "label": "Illuminance", "type": "float", "default": 200, "min": 1, "max": 100000, "step": 1 }
+  ],
+  "controls": [
+    { "id": "lux", "label": "Illuminance", "type": "range", "min": 1, "max": 100000, "step": 1, "unit": "lx", "scale": "log" }
+  ]
+}

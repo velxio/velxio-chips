@@ -7,11 +7,17 @@ WebAssembly module and runs inside Velxio's `ChipRuntime`. Drop the `.wasm`
 into a Custom Chip on the canvas, wire its pins, and it behaves like real
 silicon — pin events, timers, UART, I2C, SPI, framebuffer, the works.
 
-The collection includes a 5-CPU **retro Intel/Zilog family** (4004, 4040,
-8080, 8086, Z80) plus the bus / peripheral chips that pair with them
-(EPROM, SRAM, latch, PIC, PIT, USART, PPI, …), and two bundled
-"mini-computer" demos that drop on the canvas as one chip and run real
-8080 code out of an embedded ROM.
+The collection has two wings:
+
+- **Programmable sensors** — six chips whose readings you drive from live
+  sliders and buttons *while the simulation runs*, one per pattern: analog,
+  I2C register map, momentary button, logarithmic slider, SPI slave, and a
+  push-style UART sensor. Free on every Velxio plan; each one runs in the
+  gallery with a single click. See [`src/sensors/`](src/sensors/).
+- A 5-CPU **retro Intel/Zilog family** (4004, 4040, 8080, 8086, Z80) plus
+  the bus / peripheral chips that pair with them (EPROM, SRAM, latch, PIC,
+  PIT, USART, PPI, …), and two bundled "mini-computer" demos that drop on
+  the canvas as one chip and run real 8080 code out of an embedded ROM.
 
 All implementations are **clean-room from manufacturer datasheets** — no
 third-party emulator code. The 8080 is validated against Microcosm's
@@ -24,6 +30,13 @@ Frank Cringle's ZEXDOC (1994).
 .
 ├── sdk/                       SDK headers (velxio-chip.h is the API)
 ├── src/
+│   ├── sensors/               Programmable sensors (live sliders/buttons)
+│   │   ├── co2-sensor.c       Analog: ppm slider → 0-5 V on OUT
+│   │   ├── i2c-env-sensor.c   Temp + humidity registers at 0x44
+│   │   ├── motion-sensor.c    PIR-style: Simulate-motion button + hold
+│   │   ├── light-sensor-log.c Log-scale lux slider, 1 V per decade
+│   │   ├── spi-thermometer.c  MAX6675-style thermocouple word
+│   │   └── uart-air-sensor.c  PM2.5 frames at 9600 baud, push-style
 │   ├── cpu/                   Retro CPU chips
 │   │   ├── 4004.c             Intel 4004 (1971)
 │   │   ├── 4040.c             Intel 4040 (1974)
@@ -67,8 +80,8 @@ export WASI_SDK=/opt/wasi-sdk
 npm run compile:all
 ```
 
-This emits `fixtures/<name>.wasm` for every chip in `src/cpu/`, `src/bus/`,
-and `src/bundled/`. The compile flags mirror what the Velxio backend uses,
+This emits `fixtures/<name>.wasm` for every chip in `src/sensors/`,
+`src/cpu/`, `src/bus/`, and `src/bundled/`. The compile flags mirror what the Velxio backend uses,
 so the same `.wasm` binary runs unchanged inside the app.
 
 ## Test
@@ -84,6 +97,27 @@ breadboard model — to wire CPUs to RAM/ROM chips by *named net* and step
 the simulated clock in nanoseconds. Most tests skip cleanly when the
 matching `.wasm` is missing, so you can `npm test` incrementally as you
 compile chips.
+
+## Programmable sensors
+
+Every chip under `src/sensors/` declares a `controls` section in its
+`chip.json` — that is what puts sliders and buttons on screen during the
+simulation. The chip re-reads the attribute with `vx_attr_read` wherever
+the value is used, so a drag lands on the very next tick, transaction, or
+frame with no recompile and no restart.
+
+The six of them are chosen to cover one pattern each; the table in
+[`src/sensors/README.md`](src/sensors/README.md) maps every chip to the
+gallery example it runs as and the pattern it teaches. Full tutorials live
+in the Velxio docs:
+[Programmable sensors](https://velxio.dev/docs/custom-chips/programmable-sensors/).
+
+Their test suites (`test_sensors/`) drive them the way the app does: the
+`attrs` Map handed to `ChipInstance` is the same storage the running WASM
+re-reads, so mutating it mid-test IS the slider, and a `set(1)`/`set(0)`
+pair is the button. The suites pin down the parts that once actually broke:
+the motion hold surviving a second press, and protocol sensors latching
+whole words so a mid-transfer drag can never tear a reading.
 
 ## Bundled demos
 
@@ -127,6 +161,7 @@ redistribute.
 
 | Folder | Tests | Code | Notes |
 | --- | --- | --- | --- |
+| test_sensors | ✅ 12 | ✅ | Six programmable sensors: slider, button, log, I2C, SPI, UART |
 | autosearch/ | n/a | n/a | Manufacturer manuals + reference cards |
 | harness    | ✅ | ✅ | BoardHarness, helpers, scripts |
 | test_buses | ✅ 17 | ✅ | rom-32k + ram-64k + latch-8282 + 4001/4002 + 8255/8251/8259/8253 |

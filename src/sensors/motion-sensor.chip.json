@@ -1,0 +1,16 @@
+{
+  "schema": "velxio-chip/v1",
+  "name": "Motion Sensor",
+  "author": "Velxio",
+  "license": "MIT",
+  "description": "PIR-style motion sensor. Press the Simulate motion button while running; OUT holds high for the hold time.",
+  "pins": ["VCC", "GND", "OUT"],
+  "attributes": [
+    { "name": "trigger", "label": "Trigger", "type": "int", "default": 0 },
+    { "name": "hold_s", "label": "Hold (s)", "type": "float", "default": 2, "min": 1, "max": 10, "step": 0.5 }
+  ],
+  "controls": [
+    { "id": "trigger", "label": "Simulate motion", "type": "button" },
+    { "id": "hold_s", "label": "Hold (s)", "type": "range", "min": 1, "max": 10, "step": 0.5, "unit": "s" }
+  ]
+}

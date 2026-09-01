@@ -1,0 +1,14 @@
+{
+  "schema": "velxio-chip/v1",
+  "name": "UART Air Sensor",
+  "author": "Velxio",
+  "license": "MIT",
+  "description": "PMS5003-style air quality sensor: pushes PM2.5 over serial at 9600 baud once a second, value on a live slider.",
+  "pins": ["VCC", "GND", "TX", "RX"],
+  "attributes": [
+    { "name": "pm25", "label": "PM2.5", "type": "float", "default": 12, "min": 0, "max": 500, "step": 1 }
+  ],
+  "controls": [
+    { "id": "pm25", "label": "PM2.5", "type": "range", "min": 0, "max": 500, "step": 1, "unit": "ug/m3" }
+  ]
+}
