@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Compile a single Intel-CPU custom chip from C → WASM.
 #
-# Mirrors test/test_custom_chips/scripts/compile-chip.sh exactly — the
-# velxio backend uses the same flags. Output lands in test_intel/fixtures/
-# by default; tests look there via src/helpers.js.
+# The velxio backend uses these exact flags, so the emitted .wasm runs
+# unchanged inside the app. Output goes wherever you point it; the test
+# suites look in <repo>/fixtures/ via harness/helpers.js.
 #
 # Usage: bash scripts/compile-chip.sh <input.c> <output.wasm>
 
@@ -11,7 +11,7 @@ set -euo pipefail
 
 if [ $# -lt 2 ]; then
   echo "Usage: $0 <input.c> <output.wasm>"
-  echo "  e.g. $0 test_8080/8080.c fixtures/8080.wasm"
+  echo "  e.g. $0 chips/cpu/8080.c fixtures/8080.wasm"
   exit 64
 fi
 

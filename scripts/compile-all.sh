@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Compile every chip source under test_*/  into  fixtures/<name>.wasm.
-# A chip source is any  test_<chip>/<chip>.c  or  test_buses/<name>.c.
+# Compile every chip source under chips/  into  fixtures/<name>.wasm,
+# plus the test-only alternate-header chip (tests/compat/) — which is NOT
+# under chips/ on purpose, and which this sweep once missed entirely: its
+# suite skip-if-no-wasm'd itself in CI for months and the silence read as
+# green.
 #
 # Usage:  bash scripts/compile-all.sh
-#
-# Skips chips whose .c source does not exist yet (TDD-friendly — most
-# of the per-chip folders only have a README at first).
 
 set -euo pipefail
 
@@ -18,8 +18,7 @@ found=0
 compiled=0
 
 shopt -s nullglob
-# Compile every .c under src/{cpu,bus,bundled}/ into fixtures/<name>.wasm.
-for c_source in "$ROOT"/src/cpu/*.c "$ROOT"/src/bus/*.c "$ROOT"/src/bundled/*.c "$ROOT"/src/sensors/*.c; do
+for c_source in "$ROOT"/chips/cpu/*.c "$ROOT"/chips/bus/*.c "$ROOT"/chips/bundled/*.c "$ROOT"/chips/sensors/*.c "$ROOT"/tests/compat/*.c; do
   found=$((found+1))
   base="$(basename "$c_source" .c)"
   out="$ROOT/fixtures/$base.wasm"
@@ -32,7 +31,7 @@ for c_source in "$ROOT"/src/cpu/*.c "$ROOT"/src/bus/*.c "$ROOT"/src/bundled/*.c 
 done
 
 if [ "$found" -eq 0 ]; then
-  echo "No chip sources found yet. Drop a <chip>.c into a test_*/ folder."
+  echo "No chip sources found under chips/."
   exit 0
 fi
 

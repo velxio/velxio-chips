@@ -13,7 +13,7 @@ The collection has two wings:
   sliders and buttons *while the simulation runs*, one per pattern: analog,
   I2C register map, momentary button, logarithmic slider, SPI slave, and a
   push-style UART sensor. Free on every Velxio plan; each one runs in the
-  gallery with a single click. See [`src/sensors/`](src/sensors/).
+  gallery with a single click. See [`chips/sensors/`](chips/sensors/).
 - A 5-CPU **retro Intel/Zilog family** (4004, 4040, 8080, 8086, Z80) plus
   the bus / peripheral chips that pair with them (EPROM, SRAM, latch, PIC,
   PIT, USART, PPI, …), and two bundled "mini-computer" demos that drop on
@@ -28,8 +28,10 @@ Frank Cringle's ZEXDOC (1994).
 
 ```
 .
-├── sdk/                       SDK headers (velxio-chip.h is the API)
-├── src/
+├── sdk/                       SDK headers (velxio-chip.h is the API;
+│                              wokwi-api.h / wokwi-compat.h are the
+│                              source-compatibility layer)
+├── chips/                     Every shippable chip, one .c + .chip.json
 │   ├── sensors/               Programmable sensors (live sliders/buttons)
 │   │   ├── co2-sensor.c       Analog: ppm slider → 0-5 V on OUT
 │   │   ├── i2c-env-sensor.c   Temp + humidity registers at 0x44
@@ -56,18 +58,17 @@ Frank Cringle's ZEXDOC (1994).
 │   │   └── 8253-pit.c         8253 Programmable Interval Timer
 │   └── bundled/               Single-chip mini-computer demos
 │       ├── i8080-repl.c       8080 + RAM + ROM + UART → banner streamer
-│       └── i8080-counter.c    8080 + RAM + ROM + LEDs + buttons
+│       ├── i8080-counter.c    8080 + RAM + ROM + LEDs + buttons
+│       └── roms/              8080 assembly sources of the embedded ROMs
+├── harness/                   JS testkit: ChipRuntime, PinManager, buses,
+│                              BoardHarness, helpers, ISA tables
+├── tests/                     Per-family vitest suites
+│   ├── sensors/  4004/  4040/  8080/  8086/  z80/  buses/  compat/
 ├── scripts/
 │   ├── compile-chip.sh        single chip → wasm
 │   ├── compile-all.sh         every chip → fixtures/*.wasm
-│   ├── asm8080.py             two-pass Intel 8080 assembler (Python)
-│   ├── repl-rom.s             8080 source for the bundled banner ROM
-│   └── counter-rom.s          8080 source for the bundled counter ROM
-├── src/                       Test harness (BoardHarness, helpers, ISA tables)
-├── test_4004/ … test_z80/     Per-CPU vitest suites (129 tests)
-├── test_compat/               Alternate-header compile/dispatch tests
-├── test_buses/                Bus chip tests
-├── autosearch/                Datasheet excerpts + reference manuals
+│   └── asm8080.py             two-pass Intel 8080 assembler (Python)
+├── datasheets/                Manufacturer manuals + reference cards
 └── vitest.config.js
 ```
 
@@ -80,8 +81,8 @@ export WASI_SDK=/opt/wasi-sdk
 npm run compile:all
 ```
 
-This emits `fixtures/<name>.wasm` for every chip in `src/sensors/`,
-`src/cpu/`, `src/bus/`, and `src/bundled/`. The compile flags mirror what the Velxio backend uses,
+This emits `fixtures/<name>.wasm` for every chip under `chips/`, plus the
+test-only alternate-header chip in `tests/compat/`. The compile flags mirror what the Velxio backend uses,
 so the same `.wasm` binary runs unchanged inside the app.
 
 ## Test
@@ -100,19 +101,19 @@ compile chips.
 
 ## Programmable sensors
 
-Every chip under `src/sensors/` declares a `controls` section in its
+Every chip under `chips/sensors/` declares a `controls` section in its
 `chip.json` — that is what puts sliders and buttons on screen during the
 simulation. The chip re-reads the attribute with `vx_attr_read` wherever
 the value is used, so a drag lands on the very next tick, transaction, or
 frame with no recompile and no restart.
 
 The six of them are chosen to cover one pattern each; the table in
-[`src/sensors/README.md`](src/sensors/README.md) maps every chip to the
+[`chips/sensors/README.md`](chips/sensors/README.md) maps every chip to the
 gallery example it runs as and the pattern it teaches. Full tutorials live
 in the Velxio docs:
 [Programmable sensors](https://velxio.dev/docs/custom-chips/programmable-sensors/).
 
-Their test suites (`test_sensors/`) drive them the way the app does: the
+Their test suites (`tests/sensors/`) drive them the way the app does: the
 `attrs` Map handed to `ChipInstance` is the same storage the running WASM
 re-reads, so mutating it mid-test IS the slider, and a `set(1)`/`set(0)`
 pair is the button. The suites pin down the parts that once actually broke:
@@ -121,7 +122,7 @@ whole words so a mid-transfer drag can never tear a reading.
 
 ## Bundled demos
 
-The two chips under `src/bundled/` are designed to drop straight onto
+The two chips under `chips/bundled/` are designed to drop straight onto
 Velxio's canvas as a Custom Chip:
 
 - **i8080-repl** — Intel 8080 + RAM + ROM + memory-mapped UART, wired
@@ -135,21 +136,23 @@ Velxio's canvas as a Custom Chip:
   and clears it on `BTN_RST`, driving `LED0..LED7` in binary.
 
 The 8080 emulator code in both bundled chips is the same clean-room
-implementation as `src/cpu/8080.c`, just with the bus-pin protocol
+implementation as `chips/cpu/8080.c`, just with the bus-pin protocol
 replaced by direct memory access against an internal `RAM[]` buffer +
 MMIO peripherals.
 
 ## Adding a new chip
 
-1. Write `<chip>.c` against `sdk/velxio-chip.h`. Register pins with
-   `vx_pin_register`, attach an I2C/UART/SPI peripheral if needed, and
-   schedule callbacks with `vx_pin_watch` or `vx_timer_create`.
-2. (Optional) Add a `<chip>.chip.json` describing the pin list and any
-   user-editable attributes — this is what Velxio's Custom Chip dialog
-   uses to render the chip's interface.
-3. `npm run compile:chip src/<dir>/<chip>.c fixtures/<chip>.wasm`
-4. Drop a `test_<chip>/<chip>.test.js` that uses `BoardHarness` to wire
-   the chip up and assert on its observable behaviour.
+1. Write `chips/<category>/<chip>.c` against `sdk/velxio-chip.h`.
+   Register pins with `vx_pin_register`, attach an I2C/UART/SPI
+   peripheral if needed, and schedule callbacks with `vx_pin_watch` or
+   `vx_timer_create`.
+2. Add a `<chip>.chip.json` next to it describing the pin list, any
+   user-editable attributes, and — for a sensor — the `controls` that put
+   sliders and buttons on screen while the simulation runs.
+3. `npm run compile:chip chips/<category>/<chip>.c fixtures/<chip>.wasm`
+4. Drop a `tests/<chip>/<chip>.test.js` that wires it with `BoardHarness`
+   (or `ChipInstance` directly, the way `tests/sensors/` does) and
+   asserts on its observable behaviour.
 
 ## License
 
@@ -159,14 +162,13 @@ redistribute.
 
 ## Status
 
-| Folder | Tests | Code | Notes |
-| --- | --- | --- | --- |
-| test_sensors | ✅ 12 | ✅ | Six programmable sensors: slider, button, log, I2C, SPI, UART |
-| autosearch/ | n/a | n/a | Manufacturer manuals + reference cards |
-| harness    | ✅ | ✅ | BoardHarness, helpers, scripts |
-| test_buses | ✅ 17 | ✅ | rom-32k + ram-64k + latch-8282 + 4001/4002 + 8255/8251/8259/8253 |
-| test_4004  | ✅ 12 | ✅ | Full 46-instruction ISA + Busicom-style nibble bus |
-| test_4040  | ✅ 7  | ✅ | All 14 new opcodes + INT vectoring + BBS |
-| test_8080  | ✅ 20 | ✅ | CPUDIAG end-to-end pass |
-| test_8086  | ✅ 16 | ✅ | Bus + reset + ISA + 8259 PIC integration |
-| test_z80   | ✅ 22 | ✅ | Full bus + ISA + INT/NMI + ZEXDOC end-to-end pass |
+| Suite | Tests | Notes |
+| --- | --- | --- |
+| tests/sensors | 12 | Six programmable sensors: slider, button, log, I2C, SPI, UART |
+| tests/buses   | 17 | rom-32k + ram-64k + latch-8282 + 4001/4002 + 8255/8251/8259/8253 |
+| tests/4004    | 12 | Full 46-instruction ISA + Busicom-style nibble bus |
+| tests/4040    | 7  | All 14 new opcodes + INT vectoring + BBS |
+| tests/8080    | 20 | CPUDIAG end-to-end pass |
+| tests/8086    | 16 | Bus + reset + ISA + 8259 PIC integration |
+| tests/z80     | 22 | Full bus + ISA + INT/NMI + ZEXDOC end-to-end pass |
+| tests/compat  | —  | Alternate-header (wokwi-api.h) compile + dispatch |

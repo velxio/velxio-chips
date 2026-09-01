@@ -19,16 +19,16 @@ the bar for adding a new one is low.
 
 - **Tests are the spec.** Every new chip needs at least one vitest
   test that exercises its bus protocol or pin behaviour. Bonus points
-  for end-to-end runs of public-domain firmware (the way `test_8080`
-  runs CPUDIAG and `test_z80` runs ZEXDOC).
+  for end-to-end runs of public-domain firmware (the way `tests/8080`
+  runs CPUDIAG and `tests/z80` runs ZEXDOC).
 
 ## Workflow
 
 1. Fork the repo, branch off `main`.
-2. Write `src/<category>/<chip>.c` and `src/<category>/<chip>.chip.json`.
+2. Write `chips/<category>/<chip>.c` and `chips/<category>/<chip>.chip.json`.
    `<category>` is one of `cpu`, `bus`, or `bundled`.
-3. Drop a `test_<chip>/<chip>.test.js` describing the pin contract,
-   using `BoardHarness` from `src/`.
+3. Drop a `tests/<chip>/<chip>.test.js` describing the pin contract,
+   using `BoardHarness` from `harness/`.
 4. `npm install && npm run compile:all && npm test`.
 5. Open a PR with a one-paragraph description of what the chip does and
    what datasheet you worked from.
@@ -36,7 +36,7 @@ the bar for adding a new one is low.
 ## Style
 
 - 2-space indent, K&R braces. Match the style of the existing chips —
-  `src/cpu/8080.c` is the canonical reference.
+  `chips/cpu/8080.c` is the canonical reference.
 - Top-of-file comment that names the device, the datasheet you used,
   and the pin layout it implements.
 - Pin names match the datasheet wherever possible — e.g. `A0..A15` for
