@@ -26,12 +26,16 @@ import { BoardHarness } from '../../harness/BoardHarness.js';
 import { chipWasmExists } from '../../harness/helpers.js';
 
 const CHIP = 'z80';
-// ZEXDOC itself is not in the repo — drop zexdoc.bin into tests/roms/ to
-// run this. Same permanently-red-CI story as tests/8080/cpudiag.test.js.
-const skip = !chipWasmExists(CHIP) || !existsSync(romPath('zexdoc.bin'));
 
 const here = dirname(fileURLToPath(import.meta.url));
 const romPath = (name) => resolve(here, '..', 'roms', name);
+
+// ZEXDOC itself is not in the repo — drop zexdoc.bin into tests/roms/ to
+// run this. Same permanently-red-CI story as tests/8080/cpudiag.test.js.
+// (And the guard sits BELOW romPath on purpose: with the wasm absent the
+// short-circuit hides a use-before-init that only CI, which compiles the
+// wasm, would ever evaluate.)
+const skip = !chipWasmExists(CHIP) || !existsSync(romPath('zexdoc.bin'));
 
 const CLOCK_HZ = 4_000_000;
 const CLOCK_NS = Math.round(1e9 / CLOCK_HZ);
