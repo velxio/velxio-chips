@@ -21,11 +21,14 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
 import { BoardHarness } from '../../harness/BoardHarness.js';
 import { chipWasmExists } from '../../harness/helpers.js';
 
 const CHIP = 'z80';
-const skip = !chipWasmExists(CHIP);
+// ZEXDOC itself is not in the repo — drop zexdoc.bin into tests/roms/ to
+// run this. Same permanently-red-CI story as tests/8080/cpudiag.test.js.
+const skip = !chipWasmExists(CHIP) || !existsSync(romPath('zexdoc.bin'));
 
 const here = dirname(fileURLToPath(import.meta.url));
 const romPath = (name) => resolve(here, '..', 'roms', name);

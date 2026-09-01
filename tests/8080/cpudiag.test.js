@@ -29,15 +29,24 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
 
 import { BoardHarness } from '../../harness/BoardHarness.js';
 import { chipWasmExists } from '../../harness/helpers.js';
 
 const CHIP = '8080';
-const skip = !chipWasmExists(CHIP);
 
 const here = dirname(fileURLToPath(import.meta.url));
 const romPath = (name) => resolve(here, '..', 'roms', name);
+
+// The validation ROMs (Microcosm 1980 CPUDIAG, 8080PRE) are not in the
+// repo — drop them into tests/roms/ to run these. Guarding only on the
+// wasm kept CI permanently red: the chip compiles there, the ROMs never
+// existed, and every run in the repo's history had failed on this.
+const skip =
+  !chipWasmExists(CHIP) ||
+  !existsSync(romPath('8080pre.bin')) ||
+  !existsSync(romPath('tst8080.bin'));
 
 const CLOCK_HZ = 2_000_000;
 const CLOCK_NS = Math.round(1e9 / CLOCK_HZ);
